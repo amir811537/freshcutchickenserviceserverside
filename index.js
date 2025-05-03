@@ -1,0 +1,224 @@
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
+const app = express();
+
+// amirhossainbc75
+// sHiKJoo3fAljOTPP
+
+// midewaare
+const corsOptions = {
+  origin: "*",
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
+app.use(express.json());
+
+const port = process.env.PORT || 5000;
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3yb9d5d.mongodb.net/?retryWrites=true&w=majority`;
+// console.log(uri)
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+
+    const productCollection = client.db("productDB").collection("products");
+    const cartCollection = client.db("productDB").collection("cart");
+    // user collection
+    const usercollection = client.db("productDB").collection("user");
+    const orderCollection=client.db('productDB').collection('order')
+
+    //ADDING PRODUCTS
+    app.post("/products", async (req, res) => {
+      const product = req.body;
+      // console.log('get product',product)
+      const result = await productCollection.insertOne(product);
+      res.send(result);
+    });
+
+    //getting products
+    app.get("/products", async (req, res) => {
+      const cursor = productCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+ 
+  
+
+    // get singel product by id
+    app.get("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
+    });
+
+    // updated a products
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedProduct = req.body;
+      const product = {
+        $set: {
+          photourl: updatedProduct.photourl,
+          brandname: updatedProduct.brandname,
+          name: updatedProduct.name,
+          price: updatedProduct.price,
+          rating: updatedProduct.rating,
+          type: updatedProduct.type,
+        },
+      };
+      const result = await productCollection.updateOne(
+        filter,
+        product,
+        options
+      );
+      res.send(result);
+    });
+
+    // delete a data
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      res.send(result);
+    });
+
+   // user related API post
+app.post("/users", async (req, res) => {
+  const user = req.body;
+  // Check if the user already exists by email
+  const existingUser = await usercollection.findOne({ email: user.email });
+  if (existingUser) {
+    // If user exists, don't insert again
+    return res.status(200).send({ message: "User already exists", inserted: false });
+  }
+  // Insert new user
+  const result = await usercollection.insertOne(user);
+  res.send({ message: "User inserted", inserted: true, result });
+});
+
+//  user get with email and products
+    app.get("/userProduct/:email", async (req, res) => {
+      const email=req.params.email;
+      const query = { email: email };
+      const cursor = usercollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const cursor = usercollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+//  user delete 
+app.delete('/users/:id',async(req,res)=>{
+  const id=req.params.id;
+  const query={_id: new ObjectId(id)}
+  const result= await usercollection.deleteOne(query);
+  res.send(result);
+})
+
+
+
+// cart collection 
+  //user post to cart
+  app.post("/cart", async (req, res) => {
+    const cart = req.body;
+    // console.log('get product',product)
+    const result = await cartCollection.insertOne(cart);
+    res.send(result);
+  });
+// get all cart product 
+// app.get("/cart", async (req, res) => {
+//   const cursor = cartCollection.find();
+//   const result = await cursor.toArray();
+//   res.send(result);
+// });
+// Get cart products by user email
+app.get("/cart", async (req, res) => {
+  const email = req.query.email;
+  const query = email ? { email } : {};
+  const cursor = cartCollection.find(query);
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
+app.delete("/cart", async (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).send({ message: "Email is required" });
+  const result = await cartCollection.deleteMany({ email });
+  res.send(result);
+});
+
+
+// cart delete 
+app.delete("/cart/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await cartCollection.deleteOne(query);
+  res.send(result);
+});
+// cart update 
+app.patch("/cart/:id", async (req, res) => {
+  const id = req.params.id;
+  const { quantity } = req.body;
+  const filter = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: { quantity }
+  };
+  const result = await cartCollection.updateOne(filter, updateDoc);
+  res.send(result);
+});
+
+
+// Order apis
+  //user post orders
+  app.post("/order", async (req, res) => {
+    const order = req.body;
+    const result = await orderCollection.insertOne(order);
+    res.send(result);
+  });
+  app.get("/order", async (req, res) => {
+  const cursor = orderCollection.find();
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
+  }
+}
+run().catch(console.dir);
+
+app.get("/", (req, res) => {
+  res.send("Crud is running...");
+});
+
+app.listen(port, () => {
+  console.log(`Simple Crud is Running on port ${port}`);
+});

@@ -89,26 +89,21 @@ app.post("/users", async (req, res) => {
   res.send({ message: "User inserted", inserted: true, result });
 });
 
-//  user get with email and products
-    app.get("/userProduct/:email", async (req, res) => {
-      const email=req.params.email;
-      const query = { email: email };
-      const cursor = usercollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
-    });
 
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email.toLowerCase();
-      const user = await usercollection.findOne({ email });
-      if (user) {
-        res.send(user);
-      } else {
-        res.status(404).send({ message: "User not found" });
-      }
-    });
-    
-    
+
+app.get("/users/:email", async (req, res) => {
+  const email = req.params.email.toLowerCase();
+  console.log("Looking up user by email:", email);
+  const user = await usercollection.findOne({ email });
+  if (user) {
+    console.log("User found:", user);
+    res.send(user);
+  } else {
+    console.log("User NOT found.");
+    res.status(404).send({ message: "User not found" });
+  }
+});
+
 //  user delete 
 app.delete('/users/:id',async(req,res)=>{
   const id=req.params.id;

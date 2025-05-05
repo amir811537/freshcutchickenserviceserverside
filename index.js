@@ -66,29 +66,6 @@ async function run() {
       res.send(result);
     });
 
-    // updated a products
-    app.put("/products/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
-      const updatedProduct = req.body;
-      const product = {
-        $set: {
-          photourl: updatedProduct.photourl,
-          brandname: updatedProduct.brandname,
-          name: updatedProduct.name,
-          price: updatedProduct.price,
-          rating: updatedProduct.rating,
-          type: updatedProduct.type,
-        },
-      };
-      const result = await productCollection.updateOne(
-        filter,
-        product,
-        options
-      );
-      res.send(result);
-    });
 
     // delete a data
     app.delete("/products/:id", async (req, res) => {
@@ -121,13 +98,17 @@ app.post("/users", async (req, res) => {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
-      const cursor = usercollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email.toLowerCase();
+      const user = await usercollection.findOne({ email });
+      if (user) {
+        res.send(user);
+      } else {
+        res.status(404).send({ message: "User not found" });
+      }
     });
-
-
+    
+    
 //  user delete 
 app.delete('/users/:id',async(req,res)=>{
   const id=req.params.id;

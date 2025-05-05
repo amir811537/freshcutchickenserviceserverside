@@ -196,12 +196,19 @@ app.patch("/cart/:id", async (req, res) => {
     const result = await orderCollection.insertOne(order);
     res.send(result);
   });
-  app.get("/order", async (req, res) => {
-  const cursor = orderCollection.find();
+//   app.get("/order", async (req, res) => {
+//   const cursor = orderCollection.find();
+//   const result = await cursor.toArray();
+//   res.send(result);
+// });
+app.get("/order", async (req, res) => {
+  const email = req.query.email;
+  const query = email ? { "customer.email": email } : {};
+  const cursor = orderCollection.find(query);
   const result = await cursor.toArray();
   res.send(result);
+  ;
 });
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

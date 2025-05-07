@@ -55,7 +55,35 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
- 
+    
+ // Update a product by ID
+app.patch("/products/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedProduct = req.body;
+
+  try {
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = {
+      $set: {
+        name: updatedProduct.name,
+        price: updatedProduct.price,
+        oldPrice: updatedProduct.oldPrice,
+        quantity: updatedProduct.quantity,
+        sellCount: updatedProduct.sellCount,
+        category: updatedProduct.category,
+        image: updatedProduct.image,
+        categoryImage: updatedProduct.categoryImage,
+        description: updatedProduct.description,
+      },
+    };
+
+    const result = await productCollection.updateOne(filter, updateDoc);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Failed to update product", error: error.message });
+  }
+});
+
   
 
     // get singel product by id
@@ -112,6 +140,24 @@ app.delete('/users/:id',async(req,res)=>{
   res.send(result);
 })
 
+// get all user 
+app.get("/users", async (req, res) => {
+  const users = await usercollection.find().toArray();
+  res.send(users);
+});
+
+// update user 
+app.patch("/users/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedData = req.body;
+
+  const result = await usercollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedData }
+  );
+
+  res.send(result);
+});
 
 
 // cart collection 
@@ -185,6 +231,28 @@ app.get("/order", async (req, res) => {
   res.send(result);
   ;
 });
+
+// patch api 
+app.patch("/order/:id", async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    const result = await orderCollection.updateOne(
+      { _id: new ObjectId(orderId) },
+      { $set: { status: status } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.send({ success: true, message: "Order status updated" });
+    } else {
+      res.status(404).send({ success: false, message: "Order not found" });
+    }
+  } catch (error) {
+    res.status(500).send({ success: false, message: "Error updating order", error });
+  }
+});
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

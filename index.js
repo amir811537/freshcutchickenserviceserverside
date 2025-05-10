@@ -40,6 +40,7 @@ async function run() {
     // user collection
     const usercollection = client.db("productDB").collection("user");
     const orderCollection=client.db('productDB').collection('order')
+    const orderHistoryCollection=client.db('productDB').collection('orderhistory')
 
     //ADDING PRODUCTS
     app.post("/products", async (req, res) => {
@@ -252,7 +253,36 @@ app.patch("/order/:id", async (req, res) => {
     res.status(500).send({ success: false, message: "Error updating order", error });
   }
 });
+// delete order 
+app.delete("/order/:id", async (req, res) => {
+  try {
+    const orderId = req.params.id;
 
+    const result = await orderCollection.deleteOne({ _id: new ObjectId(orderId) });
+
+    if (result.deletedCount === 1) {
+      res.send({ success: true, message: "Order deleted successfully" });
+    } else {
+      res.status(404).send({ success: false, message: "Order not found" });
+    }
+  } catch (error) {
+    res.status(500).send({ success: false, message: "Error deleting order", error });
+  }
+});
+
+  // ✅ POST to order history
+  app.post('/orderhistory', async (req, res) => {
+    const historyData = req.body;
+    const result = await orderHistoryCollection.insertOne(historyData);
+    res.send(result);
+  });
+  
+
+  // ✅ GET all order history
+  app.get('/orderhistory', async (req, res) => {
+    const result = await orderHistoryCollection.find().toArray();
+    res.send(result);
+  });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

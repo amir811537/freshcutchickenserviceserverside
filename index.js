@@ -41,6 +41,7 @@ async function run() {
     const usercollection = client.db("productDB").collection("user");
     const orderCollection=client.db('productDB').collection('order')
     const orderHistoryCollection=client.db('productDB').collection('orderhistory')
+    const cmsCollection=client.db('productDB').collection('cms')
 
     //ADDING PRODUCTS
     app.post("/products", async (req, res) => {
@@ -281,6 +282,19 @@ app.delete("/order/:id", async (req, res) => {
   // ✅ GET all order history
   app.get('/orderhistory', async (req, res) => {
     const result = await orderHistoryCollection.find().toArray();
+    res.send(result);
+  });
+
+
+// cms app apis 
+  app.post("/cms", async (req, res) => {
+    const cms = req.body;
+    const result = await cmsCollection.insertOne(cms);
+    res.send(result);
+  });
+  
+  app.get('/cms', async (req, res) => {
+    const result = await cmsCollection.find().toArray();
     res.send(result);
   });
 

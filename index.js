@@ -41,7 +41,41 @@ async function run() {
     const usercollection = client.db("productDB").collection("user");
     const orderCollection=client.db('productDB').collection('order')
     const orderHistoryCollection=client.db('productDB').collection('orderhistory')
+    const bannerCollection=client.db('productDB').collection('banner')
     const cmsCollection=client.db('productDB').collection('cms')
+
+
+// adding banner 
+   app.post("/banner", async (req, res) => {
+      const banner = req.body;
+      // console.log('get product',product)
+      const result = await bannerCollection.insertOne(banner);
+      res.send(result);
+    });
+
+    // getting banner 
+    app.get("/banner", async (req, res) => {
+      const cursor = bannerCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+// PATCH - partial update of banner by ID
+app.patch("/banner/:id", async (req, res) => {
+  const id = req.params.id;
+  const updateFields = req.body;
+
+  try {
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = { $set: updateFields };
+
+    const result = await bannerCollection.updateOne(filter, updateDoc);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Failed to update banner", error });
+  }
+});
+
+
 
     //ADDING PRODUCTS
     app.post("/products", async (req, res) => {

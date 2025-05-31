@@ -332,6 +332,33 @@ app.delete("/order/:id", async (req, res) => {
     res.send(result);
   });
 
+  app.patch("/cms/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedData = req.body;
+
+  try {
+    const result = await cmsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedData }
+    );
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Update failed", error });
+  }
+});
+// delete 
+app.delete("/cms/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await cmsCollection.deleteOne({ _id: new ObjectId(id) });
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Delete failed", error });
+  }
+});
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(

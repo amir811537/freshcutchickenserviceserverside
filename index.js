@@ -43,6 +43,91 @@ async function run() {
     const orderHistoryCollection=client.db('productDB').collection('orderhistory')
     const bannerCollection=client.db('productDB').collection('banner')
     const cmsCollection=client.db('productDB').collection('cms')
+    const attendanceCollection=client.db('productDB').collection('attendance')
+    const izzaCollection=client.db('productDB').collection('izza')
+
+// izza apis
+app.post("/izza", async (req, res) => {
+      const izza = req.body;
+      // console.log('get product',product)
+      const result = await izzaCollection.insertOne(izza);
+      res.send(result);
+    });
+
+      app.get("/izza", async (req, res) => {
+      const cursor = izzaCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+app.patch("/izza/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedData = req.body;
+
+  try {
+    const result = await izzaCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedData }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    res.send({ message: "User updated successfully", result });
+  } catch (err) {
+    res.status(500).send({ message: "Update failed", error: err });
+  }
+});
+
+
+
+
+
+// attendance apis
+app.get("/attendance", async (req, res) => {
+  const { year, month } = req.query;
+
+  const parsedYear = parseInt(year);
+  const parsedMonth = parseInt(month);
+
+  if (!parsedYear || !parsedMonth) {
+    return res.status(400).send({ error: "Invalid year or month" });
+  }
+
+  const result = await attendanceCollection.findOne({ year: parsedYear, month: parsedMonth });
+  res.send(result || {});
+});
+
+// ✅ POST attendance (optional, for initial insert)
+app.post("/attendance", async (req, res) => {
+  const attendance = req.body; // { year, month, data }
+  const result = await attendanceCollection.insertOne(attendance);
+  res.send(result);
+});
+
+// ✅ PATCH attendance (update a specific staff's status for a date)
+app.patch("/attendance", async (req, res) => {
+  const { year, month, date, staff, status } = req.body;
+
+  const filter = { year, month };
+  const update = {
+    $set: {
+      [`data.${date}.${staff}`]: status,
+    },
+  };
+  const options = { upsert: true };
+
+  const result = await attendanceCollection.updateOne(filter, update, options);
+  res.send(result);
+});
+
+
+
+
+
+
+
 
 
 // adding banner 
